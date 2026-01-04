@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ladies Clinic LOG - チャットサポート</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600&family=Zen+Maru+Gothic:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #e8a4b8;
+      --primary-dark: #d4899f;
+      --primary-light: #fdf2f5;
+      --accent: #c76b8f;
+      --text: #4a4a4a;
+      --text-light: #777;
+      --white: #ffffff;
+      --gray-light: #f8f8f8;
+      --shadow: 0 4px 20px rgba(200, 107, 143, 0.15);
+      --shadow-lg: 0 8px 40px rgba(200, 107, 143, 0.2);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Noto Sans JP', sans-serif;
+      background: linear-gradient(135deg, #fdf2f5 0%, #fff5f7 50%, #fef9fa 100%);
+      min-height: 100vh;
+      color: var(--text);
+    }
+
+    /* デモ用の背景コンテンツ */
+    .demo-content {
+      padding: 40px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .demo-content h1 {
+      font-family: 'Zen Maru Gothic', sans-serif;
+      color: var(--accent);
+      font-size: 1.8rem;
+      margin-bottom: 20px;
+    }
+
+    .demo-content p {
+      color: var(--text-light);
+      line-height: 1.8;
+      margin-bottom: 15px;
+    }
+
+    .demo-notice {
+      background: var(--white);
+      padding: 20px;
+      border-radius: 12px;
+      border-left: 4px solid var(--primary);
+      margin-top: 30px;
+    }
+
+    .demo-notice code {
+      background: #f5f5f5;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.9em;
+    }
+
+    /* チャットボットトグルボタン */
+    .chat-toggle {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      border: none;
+      cursor: pointer;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 1000;
+    }
+
+    .chat-toggle:hover {
+      transform: scale(1.08);
+      box-shadow: 0 10px 50px rgba(200, 107, 143, 0.35);
+    }
+
+    .chat-toggle svg {
+      width: 28px;
+      height: 28px;
+      fill: var(--white);
+      transition: transform 0.3s ease;
+    }
+
+    .chat-toggle.active svg.icon-chat {
+      display: none;
+    }
+
+    .chat-toggle svg.icon-close {
+      display: none;
+    }
+
+    .chat-toggle.active svg.icon-close {
+      display: block;
+    }
+
+    /* チャットウィンドウ */
+    .chat-window {
+      position: fixed;
+      bottom: 100px;
+      right: 24px;
+      width: 380px;
+      max-width: calc(100vw - 48px);
+      height: 560px;
+      max-height: calc(100vh - 140px);
+      background: var(--white);
+      border-radius: 20px;
+      box-shadow: var(--shadow-lg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(20px) scale(0.95);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 999;
+    }
+
+    .chat-window.open {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0) scale(1);
+    }
+
+    /* ヘッダー */
+    .chat-header {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      padding: 18px 20px;
+      color: var(--white);
+    }
+
+    .chat-header h2 {
+      font-family: 'Zen Maru Gothic', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .chat-header p {
+      font-size: 0.75rem;
+      opacity: 0.9;
+    }
+
+    /* メッセージエリア */
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      background: var(--gray-light);
+    }
+
+    .chat-messages::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .chat-messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .chat-messages::-webkit-scrollbar-thumb {
+      background: var(--primary);
+      border-radius: 3px;
+    }
+
+    .message {
+      margin-bottom: 16px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .message.bot {
+      display: flex;
+      gap: 10px;
+    }
+
+    .bot-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .bot-avatar svg {
+      width: 20px;
+      height: 20px;
+      fill: var(--white);
+    }
+
+    .message-content {
+      background: var(--white);
+      padding: 14px 16px;
+      border-radius: 16px;
+      border-top-left-radius: 4px;
+      max-width: 85%;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      font-size: 0.9rem;
+      line-height: 1.7;
+      white-space: pre-wrap;
+    }
+
+    .message.user {
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .message.user .message-content {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: var(--white);
+      border-radius: 16px;
+      border-top-right-radius: 4px;
+    }
+
+    /* ローディング */
+    .loading-dots {
+      display: flex;
+      gap: 4px;
+      padding: 8px 0;
+    }
+
+    .loading-dots span {
+      width: 8px;
+      height: 8px;
+      background: var(--primary);
+      border-radius: 50%;
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0); }
+      40% { transform: scale(1); }
+    }
+
+    /* 入力エリア */
+    .chat-input-area {
+      padding: 16px;
+      background: var(--white);
+      border-top: 1px solid rgba(232, 164, 184, 0.2);
+    }
+
+    .chat-input-wrapper {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .chat-input {
+      flex: 1;
+      padding: 12px 16px;
+      border: 2px solid var(--primary-light);
+      border-radius: 24px;
+      font-size: 0.9rem;
+      font-family: inherit;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .chat-input:focus {
+      border-color: var(--primary);
+    }
+
+    .chat-input::placeholder {
+      color: #bbb;
+    }
+
+    .chat-input:disabled {
+      background: #f9f9f9;
+    }
+
+    .send-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.2s ease, opacity 0.2s ease;
+    }
+
+    .send-btn:hover:not(:disabled) {
+      transform: scale(1.08);
+    }
+
+    .send-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .send-btn svg {
+      width: 20px;
+      height: 20px;
+      fill: var(--white);
+    }
+
+    /* レスポンシブ */
+    @media (max-width: 480px) {
+      .chat-window {
+        bottom: 0;
+        right: 0;
+        width: 100%;
+        max-width: 100%;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+      }
+
+      .chat-toggle {
+        bottom: 16px;
+        right: 16px;
+      }
+
+      .chat-window.open ~ .chat-toggle {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- デモ用コンテンツ -->
+  <div class="demo-content">
+    <h1>🏥 Ladies Clinic LOG</h1>
+    <p>Claude AI搭載のチャットボットです。右下のボタンをクリックしてお試しください。</p>
+    <div class="demo-notice">
+      <strong>✅ セキュリティ対策済み</strong><br>
+      APIキーはサーバー側で安全に管理されています。<br>
+      フロントエンドからはAPIキーにアクセスできません。
+    </div>
+  </div>
+
+  <!-- チャットボットトグルボタン -->
+  <button class="chat-toggle" id="chatToggle" aria-label="チャットを開く">
+    <svg class="icon-chat" viewBox="0 0 24 24">
+      <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H6l-2 2V4h16v12z"/>
+    </svg>
+    <svg class="icon-close" viewBox="0 0 24 24">
+      <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+    </svg>
+  </button>
+
+  <!-- チャットウィンドウ -->
+  <div class="chat-window" id="chatWindow">
+    <div class="chat-header">
+      <h2>💬 チャットサポート</h2>
+      <p>AI がご質問にお答えします</p>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-input-area">
+      <div class="chat-input-wrapper">
+        <input type="text" class="chat-input" id="chatInput" placeholder="ご質問を入力してください...">
+        <button class="send-btn" id="sendBtn" aria-label="送信">
+          <svg viewBox="0 0 24 24">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // DOM要素
+    const chatToggle = document.getElementById('chatToggle');
+    const chatWindow = document.getElementById('chatWindow');
+    const chatMessages = document.getElementById('chatMessages');
+    const chatInput = document.getElementById('chatInput');
+    const sendBtn = document.getElementById('sendBtn');
+
+    let isOpen = false;
+    let isLoading = false;
+    let conversationHistory = [];
+
+    // チャットの開閉
+    chatToggle.addEventListener('click', () => {
+      isOpen = !isOpen;
+      chatWindow.classList.toggle('open', isOpen);
+      chatToggle.classList.toggle('active', isOpen);
+      
+      if (isOpen && chatMessages.children.length === 0) {
+        showWelcomeMessage();
+      }
+    });
+
+    // ウェルカムメッセージ
+    function showWelcomeMessage() {
+      const welcomeText = 'こんにちは！Ladies Clinic LOG チャットサポートです🌸\n\nご予約、料金、検査・手術についてなど、お気軽にご質問ください。';
+      addBotMessage(welcomeText);
+      conversationHistory.push({ role: 'assistant', content: welcomeText });
+    }
+
+    // メッセージ送信
+    async function sendMessage() {
+      const text = chatInput.value.trim();
+      if (!text || isLoading) return;
+
+      // ユーザーメッセージを表示
+      addUserMessage(text);
+      conversationHistory.push({ role: 'user', content: text });
+      chatInput.value = '';
+      
+      // ローディング表示
+      isLoading = true;
+      updateInputState();
+      const loadingEl = showLoading();
+
+      try {
+        // バックエンドAPIにリクエスト
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            messages: conversationHistory.filter(m => m.role !== 'assistant' || conversationHistory.indexOf(m) > 0)
+          })
+        });
+
+        const data = await response.json();
+        
+        // ローディングを削除
+        loadingEl.remove();
+
+        if (response.ok && data.message) {
+          addBotMessage(data.message);
+          conversationHistory.push({ role: 'assistant', content: data.message });
+        } else {
+          addBotMessage('申し訳ございません。エラーが発生しました。\nお手数ですが、お電話またはLINEでお問い合わせください。');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        loadingEl.remove();
+        addBotMessage('申し訳ございません。接続エラーが発生しました。\nお手数ですが、お電話またはLINEでお問い合わせください。');
+      } finally {
+        isLoading = false;
+        updateInputState();
+      }
+    }
+
+    // 入力状態の更新
+    function updateInputState() {
+      chatInput.disabled = isLoading;
+      sendBtn.disabled = isLoading;
+    }
+
+    // ローディング表示
+    function showLoading() {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message bot';
+      messageDiv.innerHTML = `
+        <div class="bot-avatar">
+          <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+        </div>
+        <div class="message-content">
+          <div class="loading-dots">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      `;
+      chatMessages.appendChild(messageDiv);
+      scrollToBottom();
+      return messageDiv;
+    }
+
+    // ボットメッセージを追加
+    function addBotMessage(text) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message bot';
+      messageDiv.innerHTML = `
+        <div class="bot-avatar">
+          <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+        </div>
+        <div class="message-content">${escapeHtml(text)}</div>
+      `;
+      chatMessages.appendChild(messageDiv);
+      scrollToBottom();
+    }
+
+    // ユーザーメッセージを追加
+    function addUserMessage(text) {
+      const messageDiv = document.createElement('div');
+      messageDiv.className = 'message user';
+      messageDiv.innerHTML = `<div class="message-content">${escapeHtml(text)}</div>`;
+      chatMessages.appendChild(messageDiv);
+      scrollToBottom();
+    }
+
+    // HTMLエスケープ
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // スクロール
+    function scrollToBottom() {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    // イベントリスナー
+    sendBtn.addEventListener('click', sendMessage);
+    chatInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendMessage();
+      }
+    });
+  </script>
+
+</body>
+</html>
