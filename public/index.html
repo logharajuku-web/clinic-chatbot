@@ -30,10 +30,10 @@
       color: var(--text);
     }
 
-    /* チャットボットトグルボタン */
+    /* チャットボットトグルボタン - 右上に配置 */
     .chat-toggle {
       position: fixed;
-      bottom: 24px;
+      top: 100px;
       right: 24px;
       width: 64px;
       height: 64px;
@@ -73,15 +73,15 @@
       display: block;
     }
 
-    /* チャットウィンドウ */
+    /* チャットウィンドウ - 右上に配置 */
     .chat-window {
       position: fixed;
-      bottom: 100px;
+      top: 180px;
       right: 24px;
       width: 380px;
       max-width: calc(100vw - 48px);
-      height: 560px;
-      max-height: calc(100vh - 140px);
+      height: 500px;
+      max-height: calc(100vh - 220px);
       background: var(--white);
       border-radius: 20px;
       box-shadow: var(--shadow-lg);
@@ -90,7 +90,7 @@
       overflow: hidden;
       opacity: 0;
       visibility: hidden;
-      transform: translateY(20px) scale(0.95);
+      transform: translateY(-20px) scale(0.95);
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 999;
     }
@@ -290,21 +290,24 @@
       fill: var(--white);
     }
 
-    /* レスポンシブ */
+    /* レスポンシブ - スマホ対応 */
     @media (max-width: 480px) {
+      .chat-toggle {
+        top: auto;
+        bottom: 100px;
+        right: 16px;
+        width: 56px;
+        height: 56px;
+      }
+
       .chat-window {
-        bottom: 0;
+        top: 0;
         right: 0;
         width: 100%;
         max-width: 100%;
         height: 100%;
         max-height: 100%;
         border-radius: 0;
-      }
-
-      .chat-toggle {
-        bottom: 16px;
-        right: 16px;
       }
 
       .chat-window.open ~ .chat-toggle {
@@ -346,15 +349,15 @@
 
   <script>
     // DOM要素
-    const chatToggle = document.getElementById('chatToggle');
-    const chatWindow = document.getElementById('chatWindow');
-    const chatMessages = document.getElementById('chatMessages');
-    const chatInput = document.getElementById('chatInput');
-    const sendBtn = document.getElementById('sendBtn');
+    var chatToggle = document.getElementById('chatToggle');
+    var chatWindow = document.getElementById('chatWindow');
+    var chatMessages = document.getElementById('chatMessages');
+    var chatInput = document.getElementById('chatInput');
+    var sendBtn = document.getElementById('sendBtn');
 
-    let isOpen = false;
-    let isLoading = false;
-    let conversationHistory = [];
+    var isOpen = false;
+    var isLoading = false;
+    var conversationHistory = [];
 
     // チャットの開閉
     chatToggle.addEventListener('click', function() {
