@@ -395,7 +395,14 @@
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
       
-      // URLをリンクに変換（最初に処理）
+      // マークダウンのリンク [文字](URL) をプレースホルダに退避（生URLリンク化より前に処理）
+      const mdLinks = [];
+      html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, function(_, label, url) {
+        mdLinks.push('<a href="' + url + '" target="_blank" rel="noopener noreferrer">' + label + '</a>');
+        return '@@MDLINK' + (mdLinks.length - 1) + '@@';
+      });
+
+      // 生のURLをリンクに変換
       html = html.replace(/(https?:\/\/[^\s<>\)]+)/g, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
       
       // 見出し ## を変換
@@ -428,6 +435,9 @@
       html = html.replace(/<\/h2><br>/g, '</h2>');
       html = html.replace(/<br><ul>/g, '<ul>');
       html = html.replace(/<\/ul><br>/g, '</ul>');
+      
+      // 退避したマークダウンリンクを復元
+      html = html.replace(/@@MDLINK(\d+)@@/g, function(_, i) { return mdLinks[i]; });
       
       return html;
     }
