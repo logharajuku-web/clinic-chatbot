@@ -196,6 +196,43 @@
     }
 
     /* 入力エリア */
+    .booking-bar {
+      display: flex;
+      gap: 8px;
+      padding: 10px 20px 0;
+      background: #fff;
+    }
+
+    .booking-btn {
+      flex: 1;
+      text-align: center;
+      padding: 11px 8px;
+      border-radius: 22px;
+      font-size: 13px;
+      font-weight: 600;
+      text-decoration: none;
+      color: #fff;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .booking-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .booking-btn.line { background: #06c755; }
+    .booking-btn.web { background: linear-gradient(135deg, #8b7355 0%, #6d5a45 100%); }
+
+    .disclaimer-note {
+      padding: 8px 20px;
+      background: #faf7f2;
+      border-top: 1px solid #e8e0d5;
+      color: #8b7355;
+      font-size: 11px;
+      line-height: 1.5;
+      text-align: center;
+    }
+
     .chat-input-area {
       padding: 16px 20px;
       background: #fff;
@@ -314,6 +351,17 @@
   <!-- メッセージエリア -->
   <div class="chat-messages" id="chatMessages">
     <!-- メッセージはJSで追加 -->
+  </div>
+
+  <!-- 予約ボタン -->
+  <div class="booking-bar">
+    <a class="booking-btn line" href="https://line.me/R/ti/p/@769lkrog?oat__id=2574890" target="_blank" rel="noopener">LINEで予約</a>
+    <a class="booking-btn web" href="https://log-harajuku.reserve.ne.jp/sp/index.php" target="_blank" rel="noopener">WEBで予約</a>
+  </div>
+
+  <!-- 免責・注意書き -->
+  <div class="disclaimer-note">
+    ※AIによる一般的なご案内です。診断は行いません。氏名・連絡先などの個人情報や詳しい症状の入力はお控えください。
   </div>
 
   <!-- 入力エリア -->
@@ -493,7 +541,7 @@
     // 初期メッセージ
     window.addEventListener('load', () => {
       setTimeout(() => {
-        addMessage('こんにちは。Ladies Clinic LOG原宿のチャットサポートです。\n\nご予約、診療内容、料金など、何でもお気軽にご質問ください。', false);
+        addMessage('こんにちは。Ladies Clinic LOG原宿のチャットサポートです。\n\nご予約、診療内容、料金など、何でもお気軽にご質問ください。\n\n※当チャットはAIによる一般的なご案内です。診断は行えませんので、具体的な症状のご相談やお急ぎの場合は、お電話(03-6433-5519)またはご来院ください。', false);
       }, 500);
     });
   </script>
