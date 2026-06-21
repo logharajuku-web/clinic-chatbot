@@ -265,6 +265,25 @@ if (!process.env.ANTHROPIC_API_KEY) {
   process.exit(1);
 }
 
+// 会話ログを記録（LOG_WEBHOOK_URL が設定されていれば Googleスプレッドシート等へ送信。失敗してもチャットには影響させない）
+async function logConversation(question, answer) {
+  const url = process.env.LOG_WEBHOOK_URL;
+  if (!url) return;
+  try {
+    await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        timestamp: new Date().toLocaleString('ja-JP', { timeZone: 'Asia/Tokyo' }),
+        question: question,
+        answer: answer
+      })
+    });
+  } catch (e) {
+    console.error('ログ送信エラー:', e.message);
+  }
+}
+
 // チャットエンドポイント
 app.post('/api/chat', async (req, res) => {
   try {
@@ -303,6 +322,11 @@ app.post('/api/chat', async (req, res) => {
       .filter(function(block) { return block.type === 'text'; })
       .map(function(block) { return block.text; })
       .join('\n');
+
+    // 会話ログを記録（待たずに送信＝応答を遅らせない）
+    const lastUser = messages.slice().reverse().find(function(m) { return m.role === 'user'; });
+    const question = lastUser ? (typeof lastUser.content === 'string' ? lastUser.content : JSON.stringify(lastUser.content)) : '';
+    logConversation(question, assistantMessage);
 
     res.json({ message: assistantMessage });
 
