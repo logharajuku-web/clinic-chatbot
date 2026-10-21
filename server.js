@@ -478,7 +478,7 @@ app.post('/api/chat', async (req, res) => {
         'anthropic-version': '2023-06-01'
       },
       body: JSON.stringify({
-        model: 'claude-sonnet-5',
+        model: 'claude-sonnet-5-5',
         max_tokens: 4000,
         thinking: { type: 'adaptive' },
         output_config: { effort: 'low' },
@@ -496,10 +496,17 @@ app.post('/api/chat', async (req, res) => {
     const data = await response.json();
     
     // レスポンスからテキストを抽出
-    const assistantMessage = data.content
+    let assistantMessage = data.content
       .filter(function(block) { return block.type === 'text'; })
       .map(function(block) { return block.text; })
       .join('\n');
+
+    // AIが回答を控えた場合（refusal）や本文が空の場合は、空の返事を出さずに問い合わせ先へ案内
+    if (data.stop_reason === 'refusal' || !assistantMessage.trim()) {
+      console.warn('回答なし: stop_reason=' + data.stop_reason, data.stop_details || '');
+      assistantMessage = '申し訳ありません。このご質問にはチャットでお答えできませんでした。\n\n' +
+        'お手数ですが、お電話（03-6433-5519）またはLINEにてお問い合わせください。';
+    }
 
     // 会話ログを記録（待たずに送信＝応答を遅らせない）
     const lastUser = messages.slice().reverse().find(function(m) { return m.role === 'user'; });
